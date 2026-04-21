@@ -1,0 +1,413 @@
+// Prisma Schema - Sistema de Gestión de Planta de Reciclado
+// Termas de Río Hondo - Santiago del Estero
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MÓDULO: AUTENTICACIÓN Y USUARIOS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+  OPERADOR
+  CONTADOR
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hash bcrypt
+  name      String
+  role      UserRole @default(OPERADOR)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  employee        Employee?
+  cashRegisters   CashRegister[]
+  alerts          Alert[]
+  createdTransactions Transaction[] @relation("CreatedBy")
+
+  @@index([email])
+  @@map("users")
+}
+
+model Permission {
+  id       String @id @default(cuid())
+  resource String // Ej: "employees", "production", "commercial"
+  action   String // Ej: "create", "read", "update", "delete"
+  roles    UserRole[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+// ============================================
+// MÓDULO: GESTIÓN DE PERSONAL
+// ============================================
+
+enum EmployeeStatus {
+  ACTIVO
+  INACTIVO
+  SUSPENDIDO
+  VACACIONES
+}
+
+enum AttendanceStatus {
+  PRESENTE
+  AUSENTE
+  TARDE
+  JUSTIFICADO
+  FALTA
+}
+
+model Employee {
+  id         String         @id @default(cuid())
+  userId     String?        @unique
+  dni        String         @unique
+  firstName  String
+  lastName   String
+  position   String         // Ej: "Operador de Máquina", "Supervisor de Turno"
+  department String         // Ej: "Producción", "Mantenimiento", "Administrativo"
+  hireDate   DateTime
+  salary     Float?
+  status     EmployeeStatus @default(ACTIVO)
+  phone      String?
+  address    String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  // Relaciones
+  user                User?                  @relation(fields: [userId], references: [id])
+  attendances         Attendance[]
+  productivity        EmployeeProductivity[]
+  shiftAssignments    ShiftAssignment[]
+
+  @@index([dni])
+  @@index([status])
+  @@map("employees")
+}
+
+model WorkShift {
+  id          String   @id @default(cuid())
+  name        String   @unique // Ej: "Turno Mañana", "Turno Tarde", "Turno Noche"
+  startTime   String   // Formato: "08:00"
+  endTime     String   // Formato: "16:00"
+  days        String[] // Ej: ["lunes", "martes", "miércoles"]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  assignments ShiftAssignment[]
+  production  ProductionDay[]
+
+  @@map("work_shifts")
+}
+
+model ShiftAssignment {
+  id         String    @id @default(cuid())
+  employeeId String
+  shiftId    String
+  startDate  DateTime
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+
+  // Relaciones
+  employee Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift    WorkShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([shiftId])
+  @@map("shift_assignments")
+}
+
+model Attendance {
+  id         String           @id @default(cuid())
+  employeeId String
+  date       DateTime         @db.Date
+  checkIn    DateTime?
+  checkOut   DateTime?
+  status     AttendanceStatus @default(PRESENTE)
+  hoursWorked Float?          @default(0)
+  observations String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  // Relaciones
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([date])
+  @@index([status])
+  @@map("attendances")
+}
+
+model EmployeeProductivity {
+  id               String   @id @default(cuid())
+  employeeId       String
+  date             DateTime @db.Date
+  tasksCompleted   Int      @default(0)
+  hoursWorked      Float    @default(0)
+  performanceScore Float?   // 0-100
+  observations     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relaciones
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([date])
+  @@map("employee_productivity")
+}
+
+// ============================================
+// MÓDULO: GESTIÓN DE PRODUCCIÓN
+// ============================================
+
+enum EquipmentStatus {
+  OPERATIVO
+  MANTENIMIENTO
+  FUERA_DE_SERVICIO
+  EN_LLENADO
+}
+
+model MaterialType {
+  id          String   @id @default(cuid())
+  name        String   @unique // Ej: "Papel", "Plástico PET", "Vidrio"
+  category    String   // Ej: "PAPEL", "PLASTICO", "VIDRIO", "METAL"
+  description String?
+  unitPrice   Float?   // Precio por tonelada
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  productionMaterials ProductionMaterial[]
+
+  @@index([category])
+  @@map("material_types")
+}
+
+model ProductionDay {
+  id            String   @id @default(cuid())
+  date          DateTime @db.Date
+  shiftId       String?
+  totalTons     Float    @default(0)
+  observations  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  shift     WorkShift?           @relation(fields: [shiftId], references: [id])
+  materials ProductionMaterial[]
+
+  @@unique([date, shiftId])
+  @@index([date])
+  @@map("production_days")
+}
+
+model ProductionMaterial {
+  id              String   @id @default(cuid())
+  productionDayId String
+  materialTypeId  String
+  quantity        Float    // Toneladas
+  createdAt       DateTime @default(now())
+
+  // Relaciones
+  productionDay ProductionDay @relation(fields: [productionDayId], references: [id], onDelete: Cascade)
+  materialType  MaterialType  @relation(fields: [materialTypeId], references: [id])
+
+  @@index([productionDayId])
+  @@index([materialTypeId])
+  @@map("production_materials")
+}
+
+model Equipment {
+  id          String          @id @default(cuid())
+  code        String          @unique // Ej: "COMP-001"
+  name        String          // Ej: "Compactadora Principal"
+  type        String          // Ej: "Compactadora", "Prensa", "Balanza"
+  capacity    Float           // Capacidad máxima en toneladas
+  status      EquipmentStatus @default(OPERATIVO)
+  location    String?
+  observations String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relaciones
+  fillings EquipmentFilling[]
+
+  @@index([status])
+  @@map("equipment")
+}
+
+model EquipmentFilling {
+  id                   String   @id @default(cuid())
+  equipmentId          String
+  date                 DateTime @default(now())
+  quantity             Float    // Cantidad en toneladas
+  completionPercentage Float    // 0-100
+  observations         String?
+
+  // Relaciones
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId])
+  @@index([date])
+  @@map("equipment_fillings")
+}
+
+// ============================================
+// MÓDULO: SISTEMA COMERCIAL Y FINANCIERO
+// ============================================
+
+enum TransactionType {
+  INGRESO
+  EGRESO
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TRANSFERENCIA
+  CHEQUE
+  TARJETA
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  type          TransactionType
+  category      String          // Ej: "Venta Material", "Pago Salarios", "Servicios"
+  amount        Float
+  date          DateTime        @default(now())
+  description   String?
+  taxable       Boolean         @default(false)
+  invoiceNumber String?
+  createdById   String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relaciones
+  createdBy User      @relation("CreatedBy", fields: [createdById], references: [id])
+  income    Income?
+  expense   Expense?
+
+  @@index([type])
+  @@index([date])
+  @@index([category])
+  @@map("transactions")
+}
+
+model Income {
+  id             String        @id @default(cuid())
+  transactionId  String        @unique
+  client         String?       // Nombre del cliente
+  productType    String?       // Tipo de material vendido
+  paymentMethod  PaymentMethod @default(EFECTIVO)
+  observations   String?
+
+  // Relaciones
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("incomes")
+}
+
+model Expense {
+  id            String        @id @default(cuid())
+  transactionId String        @unique
+  supplier      String?       // Proveedor
+  category      String        // Ej: "Salarios", "Servicios", "Insumos", "Mantenimiento"
+  paymentMethod PaymentMethod @default(EFECTIVO)
+  observations  String?
+
+  // Relaciones
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model CashRegister {
+  id             String    @id @default(cuid())
+  date           DateTime  @db.Date
+  openingBalance Float     @default(0)
+  closingBalance Float?
+  totalIncome    Float     @default(0)
+  totalExpense   Float     @default(0)
+  difference     Float?    // Descuadre de caja
+  userId         String    // Usuario que maneja la caja
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  isClosed       Boolean   @default(false)
+  observations   String?
+
+  // Relaciones
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([date, userId])
+  @@index([date])
+  @@index([isClosed])
+  @@map("cash_registers")
+}
+
+model Tax {
+  id            String   @id @default(cuid())
+  name          String   @unique // Ej: "IVA 21%", "Ingresos Brutos"
+  percentage    Float    // Ej: 21.0
+  applicableTo  String[] // Categorías de transacciones aplicables
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("taxes")
+}
+
+// ============================================
+// MÓDULO: ALERTAS Y NOTIFICACIONES
+// ============================================
+
+enum AlertType {
+  AUSENCIA_EXCESIVA
+  EQUIPO_CAPACIDAD
+  DESCUADRE_CAJA
+  PRODUCCION_BAJA
+  MANTENIMIENTO_EQUIPO
+  OTRO
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model Alert {
+  id         String        @id @default(cuid())
+  type       AlertType
+  severity   AlertSeverity @default(WARNING)
+  message    String
+  details    String?       @db.Text
+  isResolved Boolean       @default(false)
+  resolvedAt DateTime?
+  userId     String?       // Usuario asignado
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relaciones
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([type])
+  @@index([severity])
+  @@index([isResolved])
+  @@index([createdAt])
+  @@map("alerts")
+}
