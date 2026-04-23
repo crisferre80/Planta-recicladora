@@ -1,6 +1,7 @@
 'use client'
 
-import { signOut, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ReactNode } from 'react'
@@ -13,6 +14,7 @@ import {
   BellIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
+import { supabase } from '@/lib/db'
 
 interface NavItem {
   name: string
@@ -55,16 +57,23 @@ const navigation: NavItem[] = [
 ]
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { data: session } = useSession()
+  const router = useRouter()
   const pathname = usePathname()
+  const [userEmail, setUserEmail] = useState<string>('')
 
-  // Filter navigation based on user role
-  const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(session?.user?.role || '')
-  )
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setUserEmail(session.user.email || '')
+      }
+    }
+    checkUser()
+  }, [])
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+    await supabase.auth.signOut()
+    router.push('/login')
   }
 
   return (
@@ -81,17 +90,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
           {/* User Info */}
           <div className="px-4 py-4 border-b">
-            <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
-            <p className="text-xs text-gray-500">{session?.user?.email}</p>
+            <p className="text-sm font-medium text-gray-900">{userEmail}</p>
             <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded">
-              {session?.user?.role}
+              Usuario
             </span>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-            {filteredNavigation.map((item) => {
-              const isActive = pathname.startsWith(item.href)
+            {navigation.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               return (
                 <Link
                   key={item.name}

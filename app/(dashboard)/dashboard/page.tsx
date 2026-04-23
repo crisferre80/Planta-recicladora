@@ -1,22 +1,49 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { getSupabaseSession } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
+  const { session, supabase } = await getSupabaseSession()
 
   if (!session) {
     redirect('/login')
   }
 
+  // Obtener datos del usuario desde public.users
+  const { data: userData } = await supabase
+    .from('users')
+    .select('name, role')
+    .eq('id', session.user.id)
+    .single()
+
+  // Obtener estadísticas
+  const { count: employeesCount } = await supabase
+    .from('employees')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'ACTIVO')
+
+  const { count: equipmentCount } = await supabase
+    .from('equipment')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'OPERATIVO')
+
+  const { count: materialsCount } = await supabase
+    .from('material_types')
+    .select('*', { count: 'exact', head: true })
+    .eq('isActive', true)
+
+  const { count: alertsCount } = await supabase
+    .from('alerts')
+    .select('*', { count: 'exact', head: true })
+    .eq('isRead', false)
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
-          Bienvenido, {session.user.name}
+          Bienvenido, {userData?.name || session.user.email}
         </h1>
         <p className="mt-2 text-gray-600">
-          Dashboard Principal - Sistema de Gestión Integral
+          Rol: <span className="font-semibold">{userData?.role}</span> - Dashboard Principal
         </p>
       </div>
 
@@ -47,7 +74,7 @@ export default async function DashboardPage() {
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     Personal Activo
                   </dt>
-                  <dd className="text-2xl font-semibold text-gray-900">--</dd>
+                  <dd className="text-2xl font-semibold text-gray-900">{employeesCount || 0}</dd>
                 </dl>
               </div>
             </div>
@@ -69,7 +96,7 @@ export default async function DashboardPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
                     />
                   </svg>
                 </div>
@@ -77,9 +104,9 @@ export default async function DashboardPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Producción Hoy
+                    Equipos Operativos
                   </dt>
-                  <dd className="text-2xl font-semibold text-gray-900">-- Tn</dd>
+                  <dd className="text-2xl font-semibold text-gray-900">{equipmentCount || 0}</dd>
                 </dl>
               </div>
             </div>
@@ -101,7 +128,7 @@ export default async function DashboardPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                     />
                   </svg>
                 </div>
@@ -109,9 +136,9 @@ export default async function DashboardPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Balance Mensual
+                    Tipos de Material
                   </dt>
-                  <dd className="text-2xl font-semibold text-gray-900">--</dd>
+                  <dd className="text-2xl font-semibold text-gray-900">{materialsCount || 0}</dd>
                 </dl>
               </div>
             </div>
@@ -141,9 +168,9 @@ export default async function DashboardPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Alertas Activas
+                    Alertas Sin Leer
                   </dt>
-                  <dd className="text-2xl font-semibold text-gray-900">--</dd>
+                  <dd className="text-2xl font-semibold text-gray-900">{alertsCount || 0}</dd>
                 </dl>
               </div>
             </div>

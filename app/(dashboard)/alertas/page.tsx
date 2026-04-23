@@ -1,9 +1,8 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { getSupabaseSession } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 
 export default async function AlertasPage() {
-  const session = await getServerSession(authOptions)
+  const { session } = await getSupabaseSession()
 
   if (!session) {
     redirect('/login')

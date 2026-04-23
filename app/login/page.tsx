@@ -1,8 +1,9 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/db'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,17 +18,29 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       })
 
-      if (result?.error) {
-        setError(result.error)
+      if (signInError) {
+        setError(signInError.message)
+        return
+      }
+
+      if (data.user) {
+        // Verificar que la sesión se guardó
+        const { data: sessionData } = await supabase.auth.getSession()
+        
+        if (!sessionData.session) {
+          setError('Sesión no se guardó correctamente. Intente nuevamente.')
+          return
+        }
+        
+        // Redirigir al dashboard
+        window.location.href = '/dashboard'
       } else {
-        router.push('/dashboard')
-        router.refresh()
+        setError('No se recibió información del usuario')
       }
     } catch (err) {
       setError('Error al iniciar sesión. Intente nuevamente.')
@@ -95,6 +108,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
+              onClick={() => console.log('🟡 Botón clickeado')}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
@@ -105,6 +119,12 @@ export default function LoginPage() {
         <div className="text-center text-sm text-gray-600">
           <p>Usuario por defecto:</p>
           <p className="font-mono text-xs mt-1">admin@recicladora.com / admin123</p>
+        </div>
+
+        <div className="text-center">
+          <Link href="/register" className="text-sm text-green-600 hover:text-green-500 font-medium">
+            ¿No tienes usuario? Crear uno aquí →
+          </Link>
         </div>
       </div>
     </div>

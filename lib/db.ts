@@ -1,15 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { createBrowserClient } from '@supabase/ssr'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined
-}
-
-// Prisma 7 uses configuration from prisma.config.ts
-export const prisma = global.prisma || new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma
-}
-
-export default prisma
+// Supabase client for browser (client components)
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)

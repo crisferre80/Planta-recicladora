@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
-import { UserRole } from '@prisma/client'
+
+export type UserRole = 'ADMIN' | 'SUPERVISOR' | 'OPERADOR' | 'CONTADOR'
 
 /**
  * Hash a password using bcrypt
