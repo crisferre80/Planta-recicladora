@@ -8,6 +8,8 @@ export default function NuevoEmpleadoPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -23,10 +25,16 @@ export default function NuevoEmpleadoPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setPhotoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -50,13 +58,27 @@ export default function NuevoEmpleadoPage() {
           status: formData.status
         }])
         .select()
+        .single()
 
-      if (insertError) {
-        setError(insertError.message)
-        return
+      if (insertError) { setError(insertError.message); return }
+
+      // Subir foto si se seleccionó
+      if (photoFile && data?.id) {
+        const ext = photoFile.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+        const path = `employees/${data.id}/profile.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('employee-photos')
+          .upload(path, photoFile, { upsert: true, contentType: photoFile.type })
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage.from('employee-photos').getPublicUrl(path)
+          await supabase.from('employees').update({ photoUrl: publicUrl }).eq('id', data.id)
+        } else if (photoPreview) {
+          // Fallback: guardar base64
+          await supabase.from('employees').update({ photoUrl: photoPreview }).eq('id', data.id)
+        }
       }
 
-      // Redirigir a la lista de empleados
       router.push('/personal')
       router.refresh()
     } catch (err) {
@@ -66,6 +88,8 @@ export default function NuevoEmpleadoPage() {
       setIsLoading(false)
     }
   }
+
+  const initials = `${formData.firstName?.[0] ?? ''}${formData.lastName?.[0] ?? ''}`.toUpperCase()
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -81,15 +105,36 @@ export default function NuevoEmpleadoPage() {
         <form onSubmit={handleSubmit} className="space-y-6 p-6">
           {error && (
             <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                </div>
-              </div>
+              <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
           )}
 
-          {/* Información Personal */}
+          {/* Foto de perfil */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Foto de perfil</label>
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">
+                {photoPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoPreview} alt="Preview" className="h-20 w-20 rounded-full object-cover border-2 border-gray-200" />
+                ) : (
+                  <div className="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center border-2 border-gray-200">
+                    <span className="text-xl font-bold text-white">{initials || '?'}</span>
+                  </div>
+                )}
+              </div>
+              <label className="cursor-pointer border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 hover:border-blue-400 hover:bg-blue-50 transition-colors text-center flex-1">
+                <svg className="mx-auto h-6 w-6 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-xs text-gray-500">
+                  {photoFile ? photoFile.name : 'Seleccionar foto (opcional)'}
+                </span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} />
+              </label>
+            </div>
+          </div>
           <div>
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Información Personal</h3>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
@@ -261,7 +306,7 @@ export default function NuevoEmpleadoPage() {
                   <option value="ACTIVO">Activo</option>
                   <option value="INACTIVO">Inactivo</option>
                   <option value="SUSPENDIDO">Suspendido</option>
-                  <option value="DESPEDIDO">Despedido</option>
+                  <option value="VACACIONES">Vacaciones</option>
                 </select>
               </div>
             </div>

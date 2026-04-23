@@ -34,7 +34,7 @@ export default function AttendanceCalendar({ initialShifts }: AttendanceCalendar
     const load = async () => {
       const { data: employeeData } = await supabase
         .from('employees')
-        .select('id, firstName, lastName, status')
+        .select('id, firstName, lastName, status, photoUrl')
         .eq('status', 'ACTIVO')
         .order('firstName', { ascending: true })
 
@@ -227,9 +227,22 @@ export default function AttendanceCalendar({ initialShifts }: AttendanceCalendar
           {employees.map((employee) => (
             <div key={employee.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-semibold text-gray-900">{employee.firstName} {employee.lastName}</p>
-                  <p className="text-sm text-gray-500">Estado: {employee.status}</p>
+                <div className="flex items-center gap-3">
+                  {employee.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={employee.photoUrl} alt={`${employee.firstName} ${employee.lastName}`}
+                      className="h-10 w-10 rounded-full object-cover border border-gray-200 flex-shrink-0" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">
+                        {employee.firstName?.[0]}{employee.lastName?.[0]}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-900">{employee.firstName} {employee.lastName}</p>
+                    <p className="text-sm text-gray-500">{employee.status}</p>
+                  </div>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   <div>
