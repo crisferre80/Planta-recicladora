@@ -35,9 +35,10 @@ export default function ProductionCalendar() {
 
       const parsed = data ?? []
       const totals = parsed.reduce(
-        (acc, item) => {
+        (acc, item: any) => {
           const qty = item.quantity || 0
-          const price = item.materialType?.pricePerUnit || 0
+          const mt = Array.isArray(item.materialType) ? item.materialType[0] : item.materialType
+          const price = mt?.pricePerUnit || 0
           acc.totalKg += qty
           acc.totalValue += qty * price
           return acc
@@ -72,7 +73,10 @@ export default function ProductionCalendar() {
       })
 
       const monthTotal = (monthData ?? []).reduce((acc: number, item: any) => acc + (item.quantity || 0), 0)
-      const monthTotalValue = (monthData ?? []).reduce((acc: number, item: any) => acc + ((item.quantity || 0) * (item.materialType?.pricePerUnit || 0)), 0)
+      const monthTotalValue = (monthData ?? []).reduce((acc: number, item: any) => {
+        const mt = Array.isArray(item.materialType) ? item.materialType[0] : item.materialType
+        return acc + ((item.quantity || 0) * (mt?.pricePerUnit || 0))
+      }, 0)
       setMonthSummary({ totalKg: monthTotal, totalValue: monthTotalValue, daysWithProduction: Object.keys(groupByDay).length })
       setLoading(false)
     }
