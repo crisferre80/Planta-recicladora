@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import MaterialPriceConfig from './material-price-config'
 import ProductionCalendar from './production-calendar'
+import PrintButton from '@/app/components/PrintButton'
 
 export default async function ProduccionPage() {
   const { session, supabase } = await getSupabaseSession()
@@ -97,41 +98,76 @@ export default async function ProduccionPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'OPERATIVO')
 
+  // Progreso de zonas (área limpiada acumulada)
+  const ZONE_TOTALS: Record<string, number> = { A: 19907.9, B: 20216.9, C: 34894.9 }
+  const ZONE_PHASES: Record<string, number> = { A: 3, B: 2, C: 1 }
+  const ZONE_COLORS = {
+    A: { badge: 'bg-red-100 text-red-800', bar: 'bg-red-500', ring: 'border-red-300', label: 'Zona A — Roja · Fase 3' },
+    B: { badge: 'bg-orange-100 text-orange-800', bar: 'bg-orange-500', ring: 'border-orange-300', label: 'Zona B — Naranja · Fase 2' },
+    C: { badge: 'bg-yellow-100 text-yellow-800', bar: 'bg-yellow-500', ring: 'border-yellow-300', label: 'Zona C — Amarilla · Fase 1' },
+  }
+
+  const { data: zoneProgressRows } = await supabase
+    .from('zone_progress')
+    .select('zone, cleanedArea')
+
+  const zoneTotals: Record<string, number> = { A: 0, B: 0, C: 0 }
+  for (const row of (zoneProgressRows ?? []) as any[]) {
+    if (row.zone in zoneTotals) zoneTotals[row.zone] += row.cleanedArea ?? 0
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Gestión de Producción
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Control y análisis de producción diaria
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Link
-            href="/produccion/simulador"
-            className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50"
-          >
-            <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Simulador Mensual
-          </Link>
-          <Link
-            href="/produccion/nuevo"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-          >
-            <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Registrar Producción
-          </Link>
+      {/* Hero */}
+      <div
+        className="relative rounded-2xl overflow-hidden min-h-[140px] flex items-end no-print"
+        style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0369a1 100%)' }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1581092921461-7031e8fbc93e?w=1200&q=65&auto=format&fit=crop"
+          alt="" aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-25"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 to-transparent" />
+        <div className="relative z-10 p-6 flex items-end justify-between w-full">
+          <div>
+            <p className="text-sky-400 text-xs font-semibold uppercase tracking-widest mb-1">Control Industrial</p>
+            <h1 className="text-2xl font-bold text-white">Gestión de Producción</h1>
+            <p className="text-slate-300 text-sm mt-1">Control y análisis de producción diaria</p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <PrintButton />
+          </div>
         </div>
       </div>
 
+      {/* Print header */}
+      <div className="print-only hidden print-report-header">
+        <div>
+          <div className="print-report-title">Informe de Producción — Planta de Reciclado</div>
+          <div className="print-report-meta">Generado: {new Date().toLocaleString('es-AR')}</div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2 no-print">
+        <Link href="/produccion/camiones"
+          className="inline-flex items-center px-3 py-2 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-colors">
+          🚛 Ver camiones
+        </Link>
+        <Link href="/produccion/simulador"
+          className="inline-flex items-center px-3 py-2 border border-sky-200 rounded-xl text-sm font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 shadow-sm transition-colors">
+          📊 Simulador
+        </Link>
+        <Link href="/produccion/nuevo"
+          className="inline-flex items-center px-3 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition-colors">
+          + Registrar
+        </Link>
+      </div>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -232,6 +268,33 @@ export default async function ProduccionPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Zone Progress Cards */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">Progreso por Zona</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {(['C', 'B', 'A'] as const).map(zone => {
+            const cleaned = zoneTotals[zone]
+            const total = ZONE_TOTALS[zone]
+            const pct = total > 0 ? Math.min((cleaned / total) * 100, 100) : 0
+            const cfg = ZONE_COLORS[zone]
+            return (
+              <div key={zone} className={`bg-white shadow rounded-lg p-4 border-l-4 ${cfg.ring}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-sm font-semibold text-gray-800">{cfg.label}</p>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${cfg.badge}`}>Fase {ZONE_PHASES[zone]}</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">{cleaned.toLocaleString('es-AR', { maximumFractionDigits: 0 })} m²</p>
+                <p className="text-xs text-gray-500 mb-3">de {total.toLocaleString('es-AR')} m² totales</p>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className={`h-2 rounded-full ${cfg.bar} transition-all`} style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-right text-xs text-gray-500 mt-1">{pct.toFixed(1)}%</p>
+              </div>
+            )
+          })}
         </div>
       </div>
 

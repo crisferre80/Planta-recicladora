@@ -1,6 +1,7 @@
 import { getSupabaseSession } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import PrintButton from '@/app/components/PrintButton'
 
 export default async function ComercialPage() {
   const { session, supabase } = await getSupabaseSession()
@@ -43,146 +44,124 @@ export default async function ComercialPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Sistema Comercial
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Gestión financiera y contable
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Link
-            href="/comercial/cajas"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            Cajas
-          </Link>
-          <Link
-            href="/comercial/transacciones/nueva"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Nueva Transacción
-          </Link>
+      {/* Hero */}
+      <div
+        className="relative rounded-2xl overflow-hidden min-h-[140px] flex items-end no-print"
+        style={{ background: 'linear-gradient(135deg, #0f172a 0%, #14532d 60%, #16a34a 100%)' }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=65&auto=format&fit=crop"
+          alt="" aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 to-transparent" />
+        <div className="relative z-10 p-6 flex items-end justify-between w-full">
+          <div>
+            <p className="text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-1">Área Financiera</p>
+            <h1 className="text-2xl font-bold text-white">Sistema Comercial</h1>
+            <p className="text-slate-300 text-sm mt-1">Gestión financiera y contable</p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <PrintButton />
+          </div>
         </div>
       </div>
 
+      {/* Print header */}
+      <div className="print-only hidden print-report-header">
+        <div>
+          <div className="print-report-title">Informe Comercial — Planta de Reciclado</div>
+          <div className="print-report-meta">Generado: {new Date().toLocaleString('es-AR')}</div>
+        </div>
+      </div>
+
+      {/* Actions row */}
+      <div className="flex flex-wrap gap-2 no-print">
+        <Link
+          href="/comercial/cajas"
+          className="inline-flex items-center px-3 py-2 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-colors"
+        >
+          🏪 Cajas
+        </Link>
+        <Link
+          href="/comercial/transacciones/nueva"
+          className="inline-flex items-center px-3 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-colors"
+        >
+          + Nueva Transacción
+        </Link>
+      </div>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="rounded-md bg-green-500 p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Ingresos Hoy</dt>
-                  <dd className="text-lg font-medium text-gray-900">${ingresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</dd>
-                </dl>
-              </div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="stat-card p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Ingresos Hoy</p>
+              <p className="mt-2 text-2xl font-bold text-emerald-600">${ingresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-lg flex-shrink-0">💰</div>
+          </div>
+        </div>
+
+        <div className="stat-card p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Egresos Hoy</p>
+              <p className="mt-2 text-2xl font-bold text-red-600">${egresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center text-lg flex-shrink-0">💸</div>
+          </div>
+        </div>
+
+        <div className="stat-card p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Balance Hoy</p>
+              <p className={`mt-2 text-2xl font-bold ${balance >= 0 ? 'text-sky-600' : 'text-red-600'}`}>
+                ${balance.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${balance >= 0 ? 'bg-sky-500' : 'bg-orange-500'}`}>
+              📊
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="rounded-md bg-red-500 p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Egresos Hoy</dt>
-                  <dd className="text-lg font-medium text-gray-900">${egresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</dd>
-                </dl>
-              </div>
+        <div className="stat-card p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cajas Activas</p>
+              <p className="mt-2 text-2xl font-bold text-slate-800">{totalCajasActivas}</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Saldo: ${saldoCajasActivas.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className={`rounded-md p-3 ${balance >= 0 ? 'bg-blue-500' : 'bg-orange-500'}`}>
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Balance Hoy</dt>
-                  <dd className={`text-lg font-medium ${balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                    ${balance.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="rounded-md bg-purple-500 p-3">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Cajas Activas</dt>
-                  <dd className="text-lg font-medium text-gray-900">{totalCajasActivas}</dd>
-                </dl>
-              </div>
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center text-lg flex-shrink-0">🏪</div>
           </div>
         </div>
       </div>
 
       {/* Cajas Activas */}
       {activeCashRegisters && activeCashRegisters.length > 0 && (
-        <div className="bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Cajas Registradoras Activas
-            </h3>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Cajas Registradoras Activas</h3>
           </div>
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-slate-100">
             {activeCashRegisters.map((caja: any) => (
-              <li key={caja.id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-600">{caja.name}</p>
-                    <p className="text-sm text-gray-500">
-                      Abierta por: {caja.openedByUser?.name || 'Desconocido'} • {new Date(caja.openedAt).toLocaleString('es-AR')}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Saldo Actual</p>
-                    <p className="text-lg font-medium text-gray-900">
-                      ${caja.currentBalance.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
+              <li key={caja.id} className="px-5 py-4 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{caja.name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {caja.openedByUser?.name || 'Desconocido'} · {new Date(caja.openedAt).toLocaleString('es-AR')}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs text-slate-400">Saldo Actual</p>
+                  <p className="text-base font-bold text-slate-800">
+                    ${caja.currentBalance.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
               </li>
             ))}
@@ -190,56 +169,43 @@ export default async function ComercialPage() {
         </div>
       )}
 
-      {/* Transacciones Recientes */}
-      <div className="bg-white shadow sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Transacciones de Hoy
-          </h3>
-          <Link
-            href="/comercial/transacciones"
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Ver todas
+      {/* Transacciones de Hoy */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Transacciones de Hoy</h3>
+          <Link href="/comercial/transacciones" className="text-xs text-emerald-600 font-semibold hover:underline no-print">
+            Ver todas →
           </Link>
         </div>
-        <ul className="divide-y divide-gray-200">
+        <ul className="divide-y divide-slate-100">
           {todayTransactions && todayTransactions.length > 0 ? (
             todayTransactions.slice(0, 10).map((transaction: any) => (
-              <li key={transaction.id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        transaction.type === 'INGRESO' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {transaction.type}
-                      </span>
-                      <span className="ml-3 text-sm font-medium text-gray-900">
-                        {transaction.description}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {transaction.paymentMethod} • {new Date(transaction.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+              <li key={transaction.id} className="px-5 py-4 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                      transaction.type === 'INGRESO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {transaction.type}
+                    </span>
+                    <span className="text-sm font-medium text-slate-800 truncate">{transaction.description}</span>
                   </div>
-                  <div className={`text-lg font-medium ${
-                    transaction.type === 'INGRESO' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {transaction.type === 'INGRESO' ? '+' : '-'}${transaction.amount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                  </div>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {transaction.paymentMethod} · {new Date(transaction.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <div className={`text-base font-bold flex-shrink-0 ${transaction.type === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {transaction.type === 'INGRESO' ? '+' : '-'}${transaction.amount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                 </div>
               </li>
             ))
           ) : (
-            <li className="px-4 py-12 sm:px-6 text-center">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Sin transacciones</h3>
-              <p className="mt-1 text-sm text-gray-500">Comienza registrando una transacción.</p>
+            <li className="px-5 py-10 text-center">
+              <p className="text-slate-400 text-sm">Sin transacciones registradas hoy.</p>
+              <Link href="/comercial/transacciones/nueva"
+                className="mt-3 inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-emerald-500 rounded-xl hover:bg-emerald-600 transition-colors">
+                + Nueva Transacción
+              </Link>
             </li>
           )}
         </ul>

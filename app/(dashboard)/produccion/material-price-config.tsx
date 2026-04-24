@@ -64,7 +64,7 @@ export default function MaterialPriceConfig({ materialTypes }: Props) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {materials.map(material => (
           <div key={material.id} className="bg-gray-50 rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-3">

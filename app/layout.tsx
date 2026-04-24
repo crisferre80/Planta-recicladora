@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Gestión Planta de Reciclado",
   description: "Sistema de gestión integral para planta de reciclado - Termas de Río Hondo",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({

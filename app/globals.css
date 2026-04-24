@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #1e293b;
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-light: rgba(16, 185, 129, 0.12);
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 1px 3px 0 rgba(0,0,0,0.07), 0 1px 2px -1px rgba(0,0,0,0.07);
+  --card-shadow-hover: 0 10px 25px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08);
+  --header-bg: #ffffff;
 }
 
 @theme inline {
@@ -12,15 +22,152 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', 'Segoe UI', Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── GRADIENT TEXT ─── */
+.gradient-text {
+  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── GLASSMORPHISM CARD ─── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--card-shadow);
+}
+
+/* ─── STAT CARD ─── */
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.stat-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* ─── ACCENT GLOW ─── */
+.accent-glow {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+}
+
+/* ─── SECTION HERO ─── */
+.section-hero {
+  border-radius: 1rem;
+  overflow: hidden;
+  position: relative;
+}
+.section-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.45) 100%);
+}
+
+/* ─── PRINT STYLES ─── */
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .print-break { page-break-before: always; }
+
+  body {
+    background: white !important;
+    color: #0f172a !important;
+    font-size: 12px;
+  }
+
+  .print-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #10b981;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+
+  .print-report-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .print-report-meta {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+
+  th {
+    background: #0f172a !important;
+    color: white !important;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 11px;
+  }
+
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  .print-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .print-stat-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .print-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .print-stat-label {
+    font-size: 10px;
+    color: #64748b;
+    margin-top: 2px;
+  }
 }
